@@ -300,32 +300,6 @@ public class MainActivity extends AppCompatActivity {
         Toast.makeText(this, "正在连接到..." + ssid, Toast.LENGTH_SHORT).show();
     }
 
-    // 生成SHA-256加密的密码
-    private String generateSHA256Password(String ssid)
-    {
-        try
-        {
-            // 创建SHA-256 MessageDigest对象
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            // 更新MessageDigest对象，处理输入的SSID
-            byte[] hash = digest.digest(ssid.getBytes());
-            // 将字节数组转换为16进制字符串
-            StringBuilder hexString = new StringBuilder();
-            for (byte b : hash)
-            {
-                String hex = Integer.toHexString(0xff & b);
-                if (hex.length() == 1) hexString.append('0');
-                hexString.append(hex);
-            }
-            // 返回前8个字符作为Wi-Fi密码
-            return hexString.toString().substring(0, 8);
-        }
-        catch (NoSuchAlgorithmException e)
-        {
-            throw new RuntimeException(e);
-        }
-    }
-
     // 处理权限请求的结果。
     // 如果用户授予了位置权限，继续执行扫描；否则，显示权限要求的提示。
     @Override

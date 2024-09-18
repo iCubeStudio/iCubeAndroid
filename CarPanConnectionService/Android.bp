@@ -1,0 +1,22 @@
+package {
+    // See: http://go/android-license-faq
+    default_applicable_licenses: ["Android-Apache-2.0"],
+}
+
+android_app {
+    name: "CarPanConnectionService",
+    srcs: [
+        "**/*.java",
+        "src/com/rxw/panconnection/service/aidl/IUniDeviceConnection.aidl",
+        "src/com/rxw/panconnection/service/aidl/IUniDeviceConnectionCallback.aidl",
+    ],
+    platform_apis: true,
+    certificate: "platform",
+    optimize: {
+        enabled: false,
+    },
+
+    aidl: {
+        include_dirs: ["src/com/rxw/panconnection/service/aidl"],
+    },
+}
