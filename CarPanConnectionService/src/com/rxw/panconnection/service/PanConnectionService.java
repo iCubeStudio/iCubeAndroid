@@ -70,20 +70,20 @@ public class PanConnectionService extends Service {
     private final IUniDeviceConnection.Stub mBinder = new IUniDeviceConnection.Stub() {
          
         // Discovery UniDevice (wifi)
-        public void discoverUniDevice(IUniDeviceConnectionCallback callback)
+        public void discoverUniDevice(IUniDeviceConnectionCallback callback) throws RemoteException
         {
             String deviceList = mWifiTetheringHandler.getMultiDeviceArray();
-            if (mWifiTetheringHandler.isDiscoveryTAG) {
+            if (mWifiTetheringHandler.isDiscoveryTAG()) {
                 callback.onDiscoveryStateChanged(deviceList, DISCOVERY_SEARCHING);
                 Log.d(TAG, "Calling hotspot AIDL interface! Discovering...");
             }
         }
 
         // Stop Discovery UniDevice (wifi)
-        public void stopDiscoverUniDevice(IUniDeviceConnectionCallback callback)
+        public void stopDiscoverUniDevice(IUniDeviceConnectionCallback callback) throws RemoteException
         {
             String deviceList = mWifiTetheringHandler.getMultiDeviceArray();
-            if (!mWifiTetheringHandler.isDiscoveryTAG)
+            if (!mWifiTetheringHandler.isDiscoveryTAG())
             {
                 callback.onDiscoveryStateChanged(deviceList, DISCOVERY_END);
                 Log.d(TAG, "Calling hotspot AIDL interface! Discovery complete!");
@@ -109,7 +109,7 @@ public class PanConnectionService extends Service {
                     callback.onUnbondStateChanged(deviceType, deviceId, CONNECTED); 
                     Log.d(TAG, "Calling hotspot AIDL interface! UniDevice connected: " + deviceId);
                 }
-                // Disconnecting:
+                // Disconnecting
                 else if (mWifiTetheringHandler.isDisconnectingDevice(deviceId)) {
                     callback.onUnbondStateChanged(deviceType, deviceId, DISCONNECTING); 
                     Log.d(TAG, "Calling hotspot AIDL interface! UniDevice disconnecting: " + deviceId);
@@ -211,21 +211,7 @@ public class PanConnectionService extends Service {
     {
         return mBinder;
     }
-
-    @Override
-    public void onDestroy()
-    {
-        super.onDestroy();
-        try 
-        {
-            unregisterReceiver(mConnectionReceiver);
-        } 
-        catch (IllegalArgumentException e) 
-        {
-            Log.w(TAG, "Receiver was not registered.");
-        }
-    }
-
+    
     private void setForegroundService() 
     {
         NotificationChannel notificationChannel = new NotificationChannel(

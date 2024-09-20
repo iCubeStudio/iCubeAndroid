@@ -10,13 +10,11 @@ android_app {
         "src/com/rxw/panconnection/service/aidl/IUniDeviceConnection.aidl",
         "src/com/rxw/panconnection/service/aidl/IUniDeviceConnectionCallback.aidl",
     ],
+    manifest: "AndroidManifest.xml",
     platform_apis: true,
     certificate: "platform",
+    
     optimize: {
         enabled: false,
-    },
-
-    aidl: {
-        include_dirs: ["src/com/rxw/panconnection/service/aidl"],
     },
 }

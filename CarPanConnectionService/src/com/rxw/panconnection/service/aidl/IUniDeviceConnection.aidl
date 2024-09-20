@@ -1,5 +1,6 @@
 package com.rxw.panconnection.service.aidl;
 
+import com.rxw.panconnection.service.aidl.IUniDeviceConnectionCallback;
 
 interface IUniDeviceConnection {
 

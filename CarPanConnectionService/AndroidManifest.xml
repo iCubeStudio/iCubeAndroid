@@ -21,11 +21,13 @@
     <application
         android:name=".PanConnectionServiceApplication"
         android:persistent="true"
+        android:enabled="true"
         android:label="PanConnectionService" >
 
         <service
             android:name=".PanConnectionService"
-            android:exported="true">
+            android:exported="true"
+            android:enabled="true">
             <intent-filter >
                 <action android:name="rxw.intent.action.PAN_CONNECTION_SERVICE"/>
             </intent-filter>
