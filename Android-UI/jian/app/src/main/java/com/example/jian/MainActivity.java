@@ -45,8 +45,8 @@ public class MainActivity extends AppCompatActivity {
     private ArrayAdapter<String> adapter;   // 声明一个ArrayAdapter对象，将Wi-Fi扫描结果绑定到ListView
     private List<String> wifiList;  // 声明一个List对象，用于存储Wi-Fi扫描结果
 
-    private static final String TARGET_SSID = "J1511";
-    private static final String TARGET_PASSWORD = "kcdsj151101";  // "J1511" && "kcdsj151101"
+    private static final String TARGET_SSID = "Rivotek-Visitor";
+    private static final String TARGET_PASSWORD = "1234@abcd";  // "J1511" && "kcdsj151101"
 
     private Handler handler;  // 用于处理定时扫描的Handler
     private Runnable scanRunnable;  // 用于执行扫描操作的Runnable

@@ -1,0 +1,50 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+        package="com.rxw.panconnection.service"
+        android:sharedUserId="android.uid.system">
+
+    <uses-permission android:name="android.permission.BLUETOOTH" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
+    
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.TETHER_PRIVILEGED" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.NETWORK_SETTINGS" />
+    <uses-permission android:name="android.permission.WRITE_SETTINGS" />
+    <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+
+    <uses-permission android:name="android.permission.OVERRIDE_WIFI_CONFIG" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
+
+    <application
+        android:name=".PanConnectionServiceApplication"
+        android:persistent="true"
+        android:enabled="true"
+        android:label="PanConnectionService" >
+
+        <service
+            android:name=".PanConnectionService"
+            android:exported="true"
+            android:enabled="true">
+            <intent-filter >
+                <action android:name="rxw.intent.action.PAN_CONNECTION_SERVICE"/>
+            </intent-filter>
+        </service>
+
+        <service
+            android:name=".WifiConnectionManagerService"
+            android:exported="true"
+            android:enabled="true">
+            <intent-filter>
+                <action android:name="rxw.intent.action.WIFI_CONNECTION_MANAGER_SERVICE" />
+            </intent-filter>
+        </service>
+
+    </application>
+</manifest>
