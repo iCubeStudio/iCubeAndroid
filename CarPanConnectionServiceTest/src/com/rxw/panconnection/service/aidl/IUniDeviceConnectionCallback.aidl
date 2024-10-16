@@ -32,7 +32,7 @@ interface IUniDeviceConnectionCallback {
 
     /**
      * 泛设备解绑状态回调
-     *
+     * 
      * @param deviceType 设备类型：摄像头:camera,香氛机:aroma
      * @param device 解绑的泛设备
      * @param bondState 解绑状态：UNBONDING: 值为7, UNBONDED：值为8
@@ -45,6 +45,6 @@ interface IUniDeviceConnectionCallback {
      * @param deviceType 设备类型：摄像头:camera,香氛机:aroma
      * @param device 解绑的泛设备
      * @param errorCode 解绑失败的错误码
-     */
+     */ 
     void onUnbondFailed(String deviceType, String deviceId, int errorCode);
 }

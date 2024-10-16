@@ -3,9 +3,8 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-
 android_app {
-    name: "PersistAPP",
+    name: "CarPanConnectionServiceTest",
     srcs: [
         "**/*.java",
         "src/com/rxw/panconnection/service/aidl/IUniDeviceConnection.aidl",
@@ -14,12 +13,8 @@ android_app {
     manifest: "AndroidManifest.xml",
     platform_apis: true,
     certificate: "platform",
-
+    
     optimize: {
         enabled: false,
     },
-
-    static_libs: [
-        "androidx.annotation_annotation",
-    ],
 }

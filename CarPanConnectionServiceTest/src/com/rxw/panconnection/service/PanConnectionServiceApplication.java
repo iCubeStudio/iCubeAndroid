@@ -9,16 +9,10 @@ public class PanConnectionServiceApplication extends Application {
     public void onCreate() {
         super.onCreate();
         startPanConnectionService();
-        startWifiConnectionManagerService();
     }
 
     private void startPanConnectionService() {
         Intent intent = new Intent(this, PanConnectionService.class);
-        startService(intent);
-    }
-
-    private void startWifiConnectionManagerService() {
-        Intent intent = new Intent(this, WifiConnectionManagerService.class);
         startService(intent);
     }
 

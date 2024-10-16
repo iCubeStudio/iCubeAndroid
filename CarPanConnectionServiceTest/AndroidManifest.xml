@@ -4,12 +4,9 @@
 
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
-
-    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
-
-
-
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
+    
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.TETHER_PRIVILEGED" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
@@ -38,31 +35,6 @@
             <intent-filter >
                 <action android:name="rxw.intent.action.PAN_CONNECTION_SERVICE"/>
             </intent-filter>
-        </service>
-
-        <service
-            android:name=".WifiConnectionManagerService"
-            android:exported="true"
-            android:enabled="true">
-            <intent-filter>
-                <action android:name="rxw.intent.action.WIFI_CONNECTION_MANAGER_SERVICE" />
-            </intent-filter>
-        </service>
-
-        <service
-            android:name=".UniDeviceConnectionService"
-            android:enabled="true"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="com.rxw.panconnection.service.aidl" />
-                <category android:name="android.intent.category.DEFAULT"/>
-            </intent-filter>
-        </service>
-
-        <service
-            android:name=".bluetooth.BleService"
-            android:enabled="true"
-            android:exported="true">
         </service>
 
     </application>
