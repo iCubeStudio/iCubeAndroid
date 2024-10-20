@@ -30,7 +30,6 @@ import java.util.concurrent.Executor;
 import com.android.internal.util.ConcurrentUtils;
 import com.rxw.panconnection.service.wifi.WifiTetheringAvailabilityListener;
 import com.rxw.panconnection.service.wifi.WifiTetheringObserver;
-import com.rxw.panconnection.service.wifi.WifiSHA256Generator;
 
 public class WifiTetheringHandler {
 
@@ -48,13 +47,12 @@ public class WifiTetheringHandler {
     private static List<WifiClient> connectedClients = null;
 
     // WifiTethering setting
-    private static final String TARGET_SSID = "PanConnection";
+    private static final String TARGET_SSID = "PanConnectionSSID";
     private static final String TARGET_PASSPHRASE = "12345678";
     private static final int TARGET_SECURITY = SoftApConfiguration.SECURITY_TYPE_WPA2_PSK;
     private static final int TARGET_CHANNEL = 40;
     private static final boolean TARGET_HIDDEN = false;  // Do not broadcast SSID
     private static final boolean TARGET_CLIENTCONTROLBYUSER = true;
-    private static final boolean TARGET_AUTOSHUTDOWN = false;
     private static final int TARGET_BAND_2G = SoftApConfiguration.BAND_2GHZ;
     private static final int TARGET_BAND_5G = SoftApConfiguration.BAND_5GHZ;
     private static final int TARGET_MAXNUMBEROFCLIENTS = 10;
@@ -100,34 +98,15 @@ public class WifiTetheringHandler {
      *==============================================================================*/
 
     private final WifiManager.SoftApCallback mSoftApCallback = new WifiManager.SoftApCallback() {
-        /**
-         * Called when soft AP state changes.
-         *
-         * @param state         the new AP state. One of {@link #WIFI_AP_STATE_DISABLED},
-         *                      {@link #WIFI_AP_STATE_DISABLING}, {@link #WIFI_AP_STATE_ENABLED},
-         *                      {@link #WIFI_AP_STATE_ENABLING}, {@link #WIFI_AP_STATE_FAILED}
-         * @param failureReason reason when in failed state. One of
-         *                      {@link #SAP_START_FAILURE_GENERAL},
-         *                      {@link #SAP_START_FAILURE_NO_CHANNEL},
-         *                      {@link #SAP_START_FAILURE_UNSUPPORTED_CONFIGURATION}
-         */
+
         @Override
         public void onStateChanged(int state, int failureReason) {
-
-            /**
-             * WIFI_AP_STATE_DISABLING = 10 : Wi-Fi AP is currently being disabled. 
-             * WIFI_AP_STATE_DISABLED = 11 : Wi-Fi AP is disabled.
-             * WIFI_AP_STATE_ENABLING = 12 : Wi-Fi AP is currently being enabled. 
-             * WIFI_AP_STATE_ENABLING = 13 : Wi-Fi AP is enabled.
-             * WIFI_AP_STATE_FAILED = 14 : Wi-Fi AP is in a failed state.
-             */
 
             Log.d(TAG, "onStateChanged, state: " + state + ", failureReason: " + failureReason);
             handleWifiApStateChanged(state);
 
             // TODO: observer
             for (WifiTetheringObserver observer : observers) {
-
                 observer.getOnStateChanged(state, failureReason);
             }
         }
@@ -144,45 +123,9 @@ public class WifiTetheringHandler {
             }
         }
 
-        /**
-         * Called when client trying to connect but device blocked the client with specific reason.
-         *
-         * Can be used to ask user to update client to allowed list or blocked list
-         * when reason is {@link SAP_CLIENT_BLOCK_REASON_CODE_BLOCKED_BY_USER}, or
-         * indicate the block due to maximum supported client number limitation when reason is
-         * {@link SAP_CLIENT_BLOCK_REASON_CODE_NO_MORE_STAS}.
-         *
-         * @param client the currently blocked client.
-         * @param blockedReason one of blocked reason from {@link SapClientBlockedReason}
-         */
         @Override
         public void onBlockedClientConnecting(WifiClient client, int blockedReason) {
-            // =================== public @interface SapClientBlockedReason {} ====================== 
-            //
-            /**
-             *  ### blockedReason = 0
-             *  If Soft Ap client is blocked, this reason code means that client doesn't exist in the
-             *  specified configuration {@link SoftApConfiguration.Builder#setBlockedClientList(List)}
-             *  and {@link SoftApConfiguration.Builder#setAllowedClientList(List)}
-             *  and the {@link SoftApConfiguration.Builder#setClientControlByUserEnabled(boolean)}
-             *  is configured as well.
-             */
 
-            /**
-             *  ### blockedReason = 1
-             *  If Soft Ap client is blocked, this reason code means that no more clients can be
-             *  associated to this AP since it reached maximum capacity. The maximum capacity is
-             *  the minimum of {@link SoftApConfiguration.Builder#setMaxNumberOfClients(int)} and
-             *  {@link SoftApCapability#getMaxSupportedClients} which get from
-             *  {@link WifiManager.SoftApCallback#onCapabilityChanged(SoftApCapability)}.
-             */ 
-            
-             /**
-             * ### blockedReason = 2
-             * Client disconnected for unspecified reason. This could for example be because the AP is being
-             * shut down.
-             */
-            // Do nothing: can be used to ask user to update client to allowed list or blocked list.
             Log.d(TAG, "onBlockedClientConnecting: " + client.getMacAddress().toString() + ", blockedReason: " + blockedReason);
             handleonBlockedClientConnecting(client, blockedReason);
 
@@ -192,11 +135,6 @@ public class WifiTetheringHandler {
             }
         }
 
-        /**
-         * Called when capability of Soft AP changes.
-         *
-         * @param softApCapability is the Soft AP capability. {@link SoftApCapability}
-         */
         public void onCapabilityChanged(@NonNull SoftApCapability softApCapability) {
             Log.d(TAG, "onCapabilityChanged: " + softApCapability);
             
@@ -206,38 +144,12 @@ public class WifiTetheringHandler {
             }
         }
 
-        /**
-         * Called when the Soft AP information changes.
-         *
-         * Returns information on all configured Soft AP instances. The number of the elements in
-         * the list depends on Soft AP configuration and state:
-         * <ul>
-         * <li>An empty list will be returned when the Soft AP is disabled.
-         * <li>One information element will be returned in the list when the Soft AP is configured
-         *     as a single AP or when a single Soft AP remains active.
-         * <li>Two information elements will be returned in the list when the multiple Soft APs are
-         *     configured and are active.
-         *     (configured using {@link SoftApConfiguration.Builder#setBands(int[])} or
-         *     {@link SoftApConfiguration.Builder#setChannels(android.util.SparseIntArray)}).
-         * </ul>
-         *
-         * Note: When multiple Soft AP instances are configured, one of the Soft APs may
-         * be shut down independently of the other by the framework. This can happen if no devices
-         * are connected to it for some duration. In that case, one information element will be
-         * returned.
-         *
-         * See {@link #isBridgedApConcurrencySupported()} for support info of multiple (bridged) AP.
-         *
-         * @param softApInfoList is the list of the Soft AP information elements -
-         *        {@link SoftApInfo}.
-         */
         public void onInfoChanged(@NonNull List<SoftApInfo> softApInfoList) {
             Log.d(TAG, "onInfoChanged: " + softApInfoList);
             // Do nothing: can be updated to add SoftApInfo details (e.g. channel) to the UI.
 
             // TODO: observer
             for (WifiTetheringObserver observer : observers) {
-
                 observer.getOnInfoChanged(softApInfoList);
             }
         }
@@ -254,36 +166,13 @@ public class WifiTetheringHandler {
                 break;
             case WifiManager.WIFI_AP_STATE_ENABLED:
                 mWifiTetheringAvailabilityListener.onWifiTetheringAvailable();
-
-                /*=========================================*
-                 * Output SoftApConfiguration info         *
-                 *=========================================*/
-
+                
+                // Output SoftApConfiguration
                 SoftApConfiguration originalConfig = mWifiManager.getSoftApConfiguration();
                 if (originalConfig != null) {
                     String SSID = originalConfig.getSsid();
                     String Passphrase = originalConfig.getPassphrase();
-                    String MaxNumberOfClients = String.valueOf(originalConfig.getMaxNumberOfClients());
-                    String HiddenSsid = String.valueOf(originalConfig.isHiddenSsid());
-                    Log.d(TAG, "onTetheringStarted!" + " SSID: " + SSID + ", Passphrase: " + Passphrase + ", MaxNumberOfClients: " + MaxNumberOfClients + ", HiddenSsid: " + HiddenSsid);
-                    
-                    if (!originalConfig.getBlockedClientList().isEmpty()) {
-                        for (MacAddress macAddress : originalConfig.getBlockedClientList()) {
-                            Log.d(TAG, "onTetheringStarted!" + " currentBlockedClientList: " + macAddress.toString());
-                        }
-                    } else {
-                        Log.d(TAG, "onTetheringStarted!" + " currentBlockedClientList is null!");
-                    }
-
-                    if (!originalConfig.getAllowedClientList().isEmpty()) {
-                        // Output currentBlockedClientList and currentAllowedClientList
-                        for (MacAddress macAddress : originalConfig.getAllowedClientList()) {
-                            Log.d(TAG, "onTetheringStarted!" + " currentAllowedClientList: " + macAddress.toString());
-                        }
-                    } else {
-                        Log.d(TAG, "onTetheringStarted!" + " currentAllowedClientList is null!");
-                    }
-
+                    Log.d(TAG, "onTetheringStarted!" + " SSID: " + SSID + ", Passphrase: " + Passphrase);
                 }
                 break;
             case WifiManager.WIFI_AP_STATE_DISABLING:
@@ -316,7 +205,6 @@ public class WifiTetheringHandler {
                 observer.onConnectionFailed(deviceType, client.getMacAddress().toString(), ERRORCODE_CONNECTION_NOCLIENTSNUM);
             }
         }
-
         if (blockedReason == 2) {
             // TODO: observer
             for (WifiTetheringObserver observer : observers) {
@@ -334,8 +222,6 @@ public class WifiTetheringHandler {
             }
         }
 
-        // Wait for 5 seconds before executing the operation
-        bondDeviceAndSoftApConfigureWithDelay(client);  
     }
 
     /*==============================================================================*
@@ -352,7 +238,7 @@ public class WifiTetheringHandler {
                 Log.d(TAG, "Wait for 5 seconds!" + " bondDeviceAndSoftApConfigureWithDelay: " + client.getMacAddress().toString());
                 bondDeviceAndSoftApConfigure(client.getMacAddress());
             }
-        }, 10000);
+        }, 5000);
     }
 
     public void unbondDeviceAndSoftApConfigureWithDelay(WifiClient client) {
@@ -365,7 +251,7 @@ public class WifiTetheringHandler {
                 unbondDeviceAndSoftApConfigure(client.getMacAddress());
                 Log.d(TAG, "Wait for 5 seconds!" + " unbondDeviceAndSoftApConfigureWithDelay: " + client.getMacAddress().toString());
             }
-        }, 10000);
+        }, 5000);
     }
 
     /*==============================================================================*
@@ -572,10 +458,10 @@ public class WifiTetheringHandler {
 
                 // Output currentBlockedClientList and currentAllowedClientList
                 for (MacAddress macAddress : mWifiManager.getSoftApConfiguration().getBlockedClientList()) {
-                    Log.d(TAG, "Output unbondDeviceAndSoftApConfigure" + " currentBlockedClientList: " + macAddress.toString());
+                    Log.d(TAG, "unbondDeviceAndSoftApConfigure" + " currentBlockedClientList: " + macAddress.toString());
                 }
                 for (MacAddress macAddress : mWifiManager.getSoftApConfiguration().getAllowedClientList()) {
-                    Log.d(TAG, "Output unbondDeviceAndSoftApConfigure" + " currentAllowedClientList: " + macAddress.toString());
+                    Log.d(TAG, "unbondDeviceAndSoftApConfigure" + " currentAllowedClientList: " + macAddress.toString());
                 }
 
             }
@@ -598,32 +484,10 @@ public class WifiTetheringHandler {
         }
     }
 
-    // @@@@@@WifiManager.setSoftApConfiguration(@NonNull SoftApConfiguration softApConfig)
-    /**
-     * Sets the tethered Wi-Fi AP Configuration.
-     *
-     * If the API is called while the tethered soft AP is enabled, the configuration will apply to
-     * the current soft AP if the new configuration only includes
-     * {@link SoftApConfiguration.Builder#setMaxNumberOfClients(int)}
-     * or {@link SoftApConfiguration.Builder#setShutdownTimeoutMillis(long)}
-     * or {@link SoftApConfiguration.Builder#setClientControlByUserEnabled(boolean)}
-     * or {@link SoftApConfiguration.Builder#setBlockedClientList(List)}
-     * or {@link SoftApConfiguration.Builder#setAllowedClientList(List)}
-     * or {@link SoftApConfiguration.Builder#setAutoShutdownEnabled(boolean)}
-     * or {@link SoftApConfiguration.Builder#setBridgedModeOpportunisticShutdownEnabled(boolean)}
-     *
-     * Otherwise, the configuration changes will be applied when the Soft AP is next started
-     * (the framework will not stop/start the AP).
-     *
-     * @param softApConfig  A valid SoftApConfiguration specifying the configuration of the SAP.
-     * @return {@code true} if the operation succeeded, {@code false} otherwise
-     *
-     * @hide
-     */
-
     /*==============================================================================*
-     * softApConfigureAndStartHotspot begin first!                                  *
-     *==============================================================================*/
+    * softApConfigureAndStartHotspot begin first!                                   *
+    *===============================================================================*/
+
     public void softApConfigureAndStartHotspot() {
 
         // softApConfigure setting
@@ -643,22 +507,18 @@ public class WifiTetheringHandler {
             * New builder (restartSoftAp)               *
             *===========================================*/
             SoftApConfiguration.Builder builder = new SoftApConfiguration.Builder();
-            currentBlockedClientList.clear();  // Test
-            currentAllowedClientList.clear();  // Test
             builder.setBlockedClientList(currentBlockedClientList);
-            builder.setAllowedClientList(currentAllowedClientList);
+            builder.setBlockedClientList(currentAllowedClientList);
             builder.setSsid(TARGET_SSID);
-            WifiSHA256Generator mWifiSHA256Generator = new WifiSHA256Generator();
-            builder.setPassphrase(mWifiSHA256Generator.generateSHA256Hash(TARGET_SSID), TARGET_SECURITY);
+            builder.setPassphrase(TARGET_PASSPHRASE, TARGET_SECURITY);
             builder.setBand(TARGET_BAND_5G);
             builder.setMaxNumberOfClients(TARGET_MAXNUMBEROFCLIENTS);
             builder.setHiddenSsid(TARGET_HIDDEN);
-            builder.setClientControlByUserEnabled(TARGET_CLIENTCONTROLBYUSER);
-            builder.setAutoShutdownEnabled(TARGET_AUTOSHUTDOWN); 
+            builder.setClientControlByUserEnabled(TARGET_CLIENTCONTROLBYUSER); 
             SoftApConfiguration currentConfig = builder.build();
             mWifiManager.setSoftApConfiguration(currentConfig);
 
-            // Changed: Output currentBlockedClientList and currentAllowedClientList
+            // Output currentBlockedClientList and currentAllowedClientList
             for (MacAddress macAddress : mWifiManager.getSoftApConfiguration().getBlockedClientList()) {
                 Log.d(TAG, "Output softApConfigureAndStartHotspot!" + " currentBlockedClientList: " + macAddress.toString());
             }
@@ -669,26 +529,24 @@ public class WifiTetheringHandler {
         } else {
             SoftApConfiguration.Builder builder = new SoftApConfiguration.Builder();
             builder.setSsid(TARGET_SSID);
-            WifiSHA256Generator mWifiSHA256Generator = new WifiSHA256Generator();
-            builder.setPassphrase(mWifiSHA256Generator.generateSHA256Hash(TARGET_SSID), TARGET_SECURITY);
+            builder.setPassphrase(TARGET_PASSPHRASE, TARGET_SECURITY);
             builder.setBand(TARGET_BAND_5G);
             builder.setMaxNumberOfClients(TARGET_MAXNUMBEROFCLIENTS);
             builder.setHiddenSsid(TARGET_HIDDEN);
             builder.setClientControlByUserEnabled(TARGET_CLIENTCONTROLBYUSER); 
-            builder.setAutoShutdownEnabled(TARGET_AUTOSHUTDOWN);
             SoftApConfiguration currentConfig = builder.build();
             mWifiManager.setSoftApConfiguration(currentConfig);
         }  
 
-        onStartInternal();  // Being register SoftApCallback!
-        updateWifiTetheringState(true);  // only activate the hotspot once!
+        onStartInternal();  
+        updateWifiTetheringState(true); 
 
         Log.d(TAG, "softApConfigureAndStartHotspot、onStartInternal and updateWifiTetheringState all completed for the first time!"); 
     }
 
     /*==============================================================================*
-     * constructor: initialize an object when creating it                           *
-     *==============================================================================*/
+    * constructor: initialize an object when creating it                            *
+    *===============================================================================*/
 
     public WifiTetheringHandler(Context context, WifiTetheringAvailabilityListener wifiTetherAvailabilityListener) {
         this(context, context.getSystemService(WifiManager.class), context.getSystemService(TetheringManager.class), wifiTetherAvailabilityListener);
@@ -701,41 +559,28 @@ public class WifiTetheringHandler {
         mWifiTetheringAvailabilityListener = wifiTetherAvailabilityListener;
     }
 
-    /**
-     * Handles operations that should happen in host's onStartInternal().
-     */
+    /*==============================================================================*
+     * SoftAP Utils                                                                 *
+     *==============================================================================*/
+
     public void onStartInternal() {
         mWifiManager.registerSoftApCallback(mContext.getMainExecutor(), mSoftApCallback);
     }
 
-    /**
-     * Handles operations that should happen in host's onStopInternal().
-     */
     public void onStopInternal() {
         mWifiManager.unregisterSoftApCallback(mSoftApCallback);
     }
 
-    /**
-     * Starts WiFi tethering.
-     * Callback for use with {@link #startTethering} to find out whether tethering succeeded.
-     */
     private void startTethering() {
         mTetheringManager.startTethering(ConnectivityManager.TETHERING_WIFI,
                 ConcurrentUtils.DIRECT_EXECUTOR, new TetheringManager.StartTetheringCallback() {
-                    /**
-                     * Called when starting tethering failed.
-                     *
-                     * @param error The error that caused the failure.
-                     */
+
                     @Override
                     public void onTetheringFailed(int error) {
                         Log.d(TAG, "onTetheringFailed, error: " + error);
                         mWifiTetheringAvailabilityListener.onWifiTetheringUnavailable();
                     }
 
-                    /**
-                     * Called when tethering has been successfully started.
-                     */
                     @Override
                     public void onTetheringStarted() {
                         Log.d(TAG, "onTetheringStarted!");                    
@@ -744,18 +589,12 @@ public class WifiTetheringHandler {
                 });
     }
 
-    /**
-     * Stops WiFi tethering if it's enabled.
-     */
     private void stopTethering() {
         if (isWifiTetheringEnabled()) {
             mTetheringManager.stopTethering(ConnectivityManager.TETHERING_WIFI);
         }
     }
 
-    /**
-     * Update Tethering State.
-     */
     public void updateWifiTetheringState(boolean enable) {
         if (enable) {
             startTethering();
@@ -764,11 +603,6 @@ public class WifiTetheringHandler {
         }
     }
 
-    /**
-     * Returns whether wifi tethering is enabled
-     *
-     * @return whether wifi tethering is enabled
-     */
     public boolean isWifiTetheringEnabled() {
         return mWifiManager.isWifiApEnabled();
     }

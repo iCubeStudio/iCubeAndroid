@@ -4,15 +4,12 @@ import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
-
 public class WifiSHA256Generator {
-    
-    /*=================================================================================================*
-     * generates a SHA-256 hash from the provided passphrase                                           *
-     * OriginalResult: a933 08c1 7f9a 95c7 e599 ab01 e329 4367 cd4d 3731 b40d e4e7 514b 9401 5dd8 5f56 *
-     * CurrentResult: a933 08c1 7f9a 95c7 e599                                                         *
-     *=================================================================================================*/
-    public String generateSHA256Hash(String Passphrase) {
+
+    /*=======================================================*
+     * generates a SHA-256 hash from the provided passphrase *
+     *=======================================================*/
+    private String generateSHA256Hash(String Passphrase) {
         try {
             // Get a MessageDigest instance for SHA-256
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
@@ -26,8 +23,8 @@ public class WifiSHA256Generator {
                 if (hex.length() == 1) hexString.append('0');
                 hexString.append(hex);
             }
-            // Return the first 20 characters of the resulting hexadecimal string
-            return hexString.toString().substring(0, 20);
+            // Return the resulting hexadecimal string
+            return hexString.toString();
         } catch (NoSuchAlgorithmException | UnsupportedEncodingException e) {
             // Throw a runtime exception if an error occurs
             throw new RuntimeException(e);
